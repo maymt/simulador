@@ -11,7 +11,11 @@ import moment from 'moment';
 
 
 
-const baseUrl="http://localhost:3001/";
+// const baseUrl = "http://localhost:3001/";
+const baseUrl = "nobunaga:9999/apis_melon/data_despacho";
+
+const urlGuardar="http://10.175.3.134:9999/apis_melon/ns_simulador/insertar/";
+const urlSelect="http://10.175.3.134:9999/apis_melon/ns_simulador/select";
 
 
 const columnas = [
@@ -49,12 +53,20 @@ const columnas = [
   { name: 'anillo', label: 'Anillo', options: { filter: false, sort: false } }, 
   { name: 'costo_produccion', label: 'Costo Producción', options: { filter: false, sort: false } }, 
   { name: 'codigo_remosion_pedido', label: 'Cod. Remosión Pedido', options: { filter: true, sort: false, filterType: 'multiselect' } },
-  { name: 'codigo_remosion_tren', label: 'Cod. Remosión Tren', options: { filter: true, sort: false } }, 
-  { name: 'codigo_remosion_tren', label: 'Cod. Remosión Tren', options: { filter: true, sort: false } }, 
-  { name: 'codigo_remosion_linea', label: 'Cod. Remosión Línea', options: { filter: true, sort: false } }, 
-  { name: 'codigo_remosion_fuera_plazo', label: 'Cod. Remosión FP', options: { filter: true, sort: false, filterType: 'multiselect' } }, 
-  { name: 'm3_a_botadero', label: 'M3 Botadero', options: { filter: true, sort: false } }, 
-  { name: 'm3_a_redestino', label: 'M3 Redestino', options: { filter: true, sort: false } }
+  { name: 'codigo_remosion_tren', label: 'Cod. Remosión Tren', options: { filter: false, sort: false } }, 
+  { name: 'codigo_remosion_tren', label: 'Cod. Remosión Tren', options: { filter: false, sort: false } }, 
+  { name: 'codigo_remosion_linea', label: 'Cod. Remosión Línea', options: { filter: false, sort: false } }, 
+  { name: 'codigo_remosion_fuera_plazo', label: 'Cod. Remosión FP', options: { filter: false, sort: false, filterType: 'multiselect' } }, 
+  { name: 'm3_a_botadero', label: 'M3 Botadero', options: { filter: false, sort: false } }, 
+  { name: 'm3_a_redestino', label: 'M3 Redestino', options: { filter: false, sort: true } },
+  { name: 'puntual', label: '¿Puntual?', options: { filter: true, sort: false } }, 
+  { name: 'atraso', label: 'Atraso', options: { filter: true, sort: false } }, 
+  { name: 'estadia_esperada', label: 'Estadía Esperada', options: { filter: true, sort: false } }, 
+  { name: 'estadia_real', label: 'Estadía Real', options: { filter: true, sort: false } },
+  { name: 'min_adicionales', label: 'Minutos Sobrestadía', options: { filter: true, sort: false } }, 
+  { name: 'min_diferencia', label: 'Total Minutos', options: { filter: true, sort: false } }, 
+  { name: 'tramos', label: 'Tramos', options: { filter: true, sort: false } }, 
+  { name: 'monto', label: 'Monto', options: { filter: true, sort: false } }
 ];
 
 
@@ -109,8 +121,8 @@ const useStyles = makeStyles((theme) => ({
 function App() {
   const classes = useStyles();
   const [data, setData] = useState([]);
-  const [sumas, setSumas] = useState([]);
-  const [rows, setRows] = useState([]);
+  const [resumen, setResumen] = useState([]);
+  const [facturado, setFacturado] = useState([]);
   const [obraSeleccionado, setObraSeleccionado]=useState({ //Datos que se ponen en los inputs
     fecha_inicio: "",
     fecha_fin: "",
@@ -131,7 +143,7 @@ function App() {
     hoy = hoy._i;
 
     var inicio = moment().subtract(1, 'months');
-    var inicio = moment(inicio).get('year')+"-"+moment(inicio).get('month')+"-"+moment(inicio).get('day');
+    inicio = moment(inicio).get('year')+"-"+moment(inicio).get('month')+"-"+moment(inicio).get('day');
     inicio = moment(inicio, 'YYYY-MM-dd');
     inicio = inicio._i;
     
@@ -144,65 +156,21 @@ function App() {
     }).catch(error=>{
       console.log(error);
     })
+    var resumen = [];
+    setResumen(resumen);
   }
 
-
-  function createDatos () {
-    if(sumas[0].min_atraso.hours === undefined || sumas[0].min_atraso.hours === NaN){
-      var atraso_horas = 0;
-    } else{
-    var atraso_horas = sumas[0].min_atraso.hours;
-  }
-
-  if(sumas[0].min_adicionales.hours === undefined || sumas[0].min_adicionales.hours === NaN){
-    var adicionales_horas = 0;
-  } else{
-    var adicionales_horas = sumas[0].min_adicionales.hours;
-  }
-
-    var atraso_minutos = sumas[0].min_atraso.minutes;
-    var adicionales_minutos = sumas[0].min_adicionales.minutes;
-
-    var atraso_ = atraso_horas * 60 + atraso_minutos;
-    var adicionales_ = adicionales_horas * 60 + adicionales_minutos;
-    var diferencia_ = 0;
-    var rango_ = 15;
-    var tramos_ = 0;
-    var monto_ = 0;
-
-    if (adicionales_ > atraso_ ) {
-      diferencia_ = adicionales_ - atraso_;
-      tramos_ = Math.floor(diferencia_ / rango_);
-      monto_ = 0.5 * tramos_;
-    } else {
-      diferencia_ = "Minutos a favor";
-    }
-
-    const rows = [ atraso_, adicionales_, diferencia_, tramos_, monto_ ];
-
-    console.log(rows);
-
-    setRows(rows);
-  }
-
-  // function setearDatos (data) {
-  //   let x,y;
-  //   //recorriendo la matriz
-  //   for (x in data) {
-  //     for (y in data[x]){
-  //       console.log(data[x][17]);
-  //       }
-  //     }
-  //   }
-  //   setData(data);
-  // }
-
-  function filtrarDatos(data, fecha_inicio, fecha_fin, obra) {
+  function filtrarDatos(data, fecha_inicio, fecha_fin, obra) { //filtra los datos por obra y fecha, genera los datos del resumen
     let x;
     
-    const rows = [];
-    var adicionales_suma = 0;
-    var atraso_suma = 0;
+    const rows = []; // pedidos de la obra y fechas seleccionadas
+    var resumen = []; // datos tabla resumenº
+
+    var adicionales_suma = 0; //suma de los minutos adicionales
+    var atraso_suma = 0; //suma de los minutos de atraso
+    var diferencia = 0; //diferencia entre atrasos y minutos adicionales.
+    var tramos = 0; // tramos de 15 minutos en la diferencia
+    var monto = 0; // monto que se debería facturar
 
     var puntual = 0;
     var atraso = 0;
@@ -210,28 +178,27 @@ function App() {
     var estadia_real = 0;
     var min_adicionales = 0;
     var min_diferencia = 0;
-    var tramos = 0;
-    var monto = 0;
-
-    var i = 0;
 
     for (x in data){
       if (data[x][3] !== null) {
         
         if ((data[x][3].includes(obra) && data[x][0] >= fecha_inicio && data[x][0] <= fecha_fin) || (data[x][3].includes(obra) && data[x][0] === fecha_inicio)) {
+          // console.log(data[x]);
+          // data[x].splice(6,1);
+          // console.log(data[x]);
           rows.push(data[x]);
           
           var solicitada = data[x][17]; //hora solicitada corregida.
           var llegada = data[x][25]; //hora de llegada a la obra.
           var salida = data[x][27]; // hora de salida de la obra.
-          var estadia_esperada = 15 + data[x][12] * 6 + 10; //estadia esperada calculada en base al volumen pedido + los 15 minutos de posicionamiento y 10 min de lavado.
+          estadia_esperada = 15 + data[x][12] * 6 + 10; //estadia esperada calculada en base al volumen pedido + los 15 minutos de posicionamiento y 10 min de lavado.
 
           if (solicitada !== null && llegada !== null && salida !== null) {
             solicitada = parseInt(solicitada.substring(0,2)) * 3600 + parseInt(solicitada.substring(3,6)) * 60 + parseInt(solicitada.substring(7,8));
             llegada = parseInt(llegada.substring(0,2)) * 3600 + parseInt(llegada.substring(3,6)) * 60 + parseInt(llegada.substring(7,8));
             salida = parseInt(salida.substring(0,2)) * 3600 + parseInt(salida.substring(3,6)) * 60 + parseInt(salida.substring(7,8));
 
-            var estadia_real = Math.ceil((salida - llegada) / 60);
+            estadia_real = Math.ceil((salida - llegada) / 60);
 
             if (Math.abs(llegada - solicitada) > 1800) {
               atraso =  Math.abs((llegada - solicitada) - 1800 ) ; //1800 s = 30 minutos rango puntualidad
@@ -245,33 +212,72 @@ function App() {
               puntual = "Si";
             };
 
-            if (estadia_real > estadia_esperada){
+            if (estadia_real > estadia_esperada && puntual === "Si"){
               min_adicionales = estadia_real - estadia_esperada;
               min_adicionales = Math.ceil(min_adicionales);
               adicionales_suma = adicionales_suma + min_adicionales;
+            } else {
+              min_adicionales = 0;
             }
       
             if (min_adicionales > atraso) {
               min_diferencia = min_adicionales - atraso;
-              tramos = Math.floor(min_diferencia / 15);
-              monto = tramos * 0.5;
             } else {
               min_diferencia = (atraso - min_adicionales);
               min_diferencia = min_diferencia + " Minutos a favor";
             }
       
-            console.log(min_diferencia, tramos, monto);
-      
-      
-            console.log(puntual, atraso); 
+            // console.log("Puntual? : ", puntual, " - Atraso: ", atraso, " - Adicionales: ", min_adicionales);      
           };
         };
       }
     };
-    setData(rows);
-    console.log(rows.length);
-}
 
+    setData(rows);
+
+    // console.log("Impuntualidad: ", atraso_suma, " - Sobrestadia: ", adicionales_suma, " - Tramos: ", tramos, " - Monto = ", monto);
+    
+    if (adicionales_suma > atraso_suma) {
+      diferencia = adicionales_suma - atraso_suma;
+      tramos = Math.floor(diferencia / 15);
+      monto = tramos * 0.5;
+    } else {
+      diferencia = "Acumula " + (atraso_suma - adicionales_suma) + " minutos en su próximo pedido";
+      tramos = 0;
+      monto = 0;
+    }
+
+    resumen = [ obra, atraso_suma, adicionales_suma, diferencia, tramos, monto ];
+    
+    setResumen(resumen);
+    // console.log(resumen);
+  }
+
+
+  const guardarFacturado = async()=>{
+    await axios.get(urlGuardar + resumen[0] + "/" + resumen[5])
+  }
+  // console.log(urlGuardar + resumen[0] + "/" + resumen[5]);
+
+  function getFacturado (obra) {
+    const select = async()=>{
+      await axios.get(urlSelect)
+      .then(response=>{
+        setFacturado(response.data);
+      })
+    }
+    
+    let x;
+    var fechasObra = [];
+
+    for (x in facturado) {
+      if ( facturado[x][1] === obra ){
+        fechasObra.push(facturado[x][1]);
+      }
+    }
+
+    setFacturado(fechasObra[fechasObra.length -1]);
+  }
   
 
 
@@ -301,27 +307,27 @@ function App() {
               <br></br>
               
               <Typography className={classes.texto}>
-                Obra:               {obraSeleccionado.obra_oc}
+                Obra:               {resumen[0]}
               </Typography>
 
               <Typography className={classes.texto}>
-                Impuntualidad Melón: {rows[0]} Minutos
+                Impuntualidad Melón: {resumen[1]} Minutos
               </Typography>
 
               <Typography className={classes.texto}>
-                Sobrestadía: {rows[1]} Minutos
+                Sobrestadía: {resumen[2]} Minutos
               </Typography>
 
               <Typography className={classes.texto}>
-                Diferencia: {rows[2]}. ({rows[0] - rows[1]})Minutos
+                Diferencia: {resumen[3]}
               </Typography>
 
               <Typography className={classes.texto}>
-                Tramos de 15min: {rows[3]}
+                Tramos de 15min: {resumen[4]}
               </Typography>
 
               <Typography className={classes.texto}>
-                Monto: {rows[4]} UF
+                Monto: {resumen[5]} UF
               </Typography>
               
               <Button
@@ -329,10 +335,14 @@ function App() {
                   color="primary"
                   className={classes.button}
                   startIcon={<Receipt />}
-                  onClick={()=> createDatos()}
+                  onClick={()=> guardarFacturado(resumen[0], resumen[5])}
                   >
-                  Calcular
+                  Facturado
               </Button>
+
+              {/* <Typography className={classes.texto}>
+                Última Facturación: {facturado[3]}
+              </Typography> */}
 
             </CardContent>
           </Card>
@@ -396,7 +406,7 @@ function App() {
                 color="primary"
                 className={classes.button}
                 startIcon={<FilterList />}
-                onClick={()=> filtrarDatos(data, obraSeleccionado.fecha_inicio, obraSeleccionado.fecha_fin, obraSeleccionado.obra_oc)}
+                onClick={()=> (filtrarDatos(data, obraSeleccionado.fecha_inicio, obraSeleccionado.fecha_fin, obraSeleccionado.obra_oc), getFacturado(obraSeleccionado.obra_oc)) }
               >
                 Filtrar
               </Button>
